@@ -21,13 +21,15 @@ transformers==5.12.1
 # --- Image handling ---
 pillow==12.2.0
 pillow-avif-plugin==1.5.5
-numpy==2.4.6
+# numpy/pandas pinned to versions with Python 3.10 wheels
+# (newer releases require Python >= 3.11)
+numpy==2.2.6
 
 # --- Price aggregation / scraping (Phase B) ---
 requests==2.34.2
 beautifulsoup4==4.15.0
 scikit-learn==1.5.2
-pandas==3.0.3
+pandas==2.2.3
 playwright==1.60.0
 # After installing playwright, also run:
 #   python -m playwright install chromium
