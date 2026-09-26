@@ -1,0 +1,345 @@
+{
+  "precision_at_5": {
+    "leave_one_out": {
+      "mode": "self_retrieval",
+      "k": 5,
+      "queries_evaluated": 48,
+      "hits": 48,
+      "precision_at_5": 1.0,
+      "mean_top1_similarity": 1.0,
+      "per_query": [
+        {
+          "query": "5G Ultra Smart Watch with Rotating Camera 2.26\" Amoled GPS WIFI",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "5G Ultra Smart Watch with Rotating Camera 2.26\" Amoled GPS WIFI"
+        },
+        {
+          "query": "Samsung Galaxy Watch 8 Classic",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Samsung Galaxy Watch 8 Classic"
+        },
+        {
+          "query": "ADIDAS UNISEX ULTRABOOST 23 (IE5979)",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "ADIDAS UNISEX ULTRABOOST 23 (IE5979)"
+        },
+        {
+          "query": "41QztOA1UuL. AC UY218",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "41QztOA1UuL. AC UY218"
+        },
+        {
+          "query": "61ZPbkpEo0L. AC UL320",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "61ZPbkpEo0L. AC UL320"
+        },
+        {
+          "query": "Acid Wash Tee",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Acid Wash Tee"
+        },
+        {
+          "query": "Adidas Gazelle",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Adidas Gazelle"
+        },
+        {
+          "query": "Adidas Ultraboost Light",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Adidas Ultraboost Light"
+        },
+        {
+          "query": "Amazfit Balance",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Amazfit Balance"
+        },
+        {
+          "query": "Amazfit GTR 4",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Amazfit GTR 4"
+        },
+        {
+          "query": "Anker Soundcore Liberty 4 NC",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Anker Soundcore Liberty 4 NC"
+        },
+        {
+          "query": "Apple AirPods 4",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Apple AirPods 4"
+        },
+        {
+          "query": "Apple Watch Ultra 2",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Apple Watch Ultra 2"
+        },
+        {
+          "query": "Arctic Hunter B00350",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Arctic Hunter B00350"
+        },
+        {
+          "query": "BL Wave Buds",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "BL Wave Buds"
+        },
+        {
+          "query": "boAt Wave Sigma",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "boAt Wave Sigma"
+        },
+        {
+          "query": "Bose QuietComfort Ultra",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Bose QuietComfort Ultra"
+        },
+        {
+          "query": "Compression Gym T Shirt Grey",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Compression Gym T Shirt Grey"
+        },
+        {
+          "query": "Dell Pro Backpack",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Dell Pro Backpack"
+        },
+        {
+          "query": "didas Campus 00s",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "didas Campus 00s"
+        },
+        {
+          "query": "Fire Boltt Ninja Call Pro",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Fire Boltt Ninja Call Pro"
+        },
+        {
+          "query": "Fire Boltt Visionary",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Fire Boltt Visionary"
+        },
+        {
+          "query": "Fitbit Sense 2",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Fitbit Sense 2"
+        },
+        {
+          "query": "Fitbit Versa 4",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Fitbit Versa 4"
+        },
+        {
+          "query": "Garmin Forerunner 265",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Garmin Forerunner 265"
+        },
+        {
+          "query": "Garmin Venu 3",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Garmin Venu 3"
+        },
+        {
+          "query": "Huawei Watch Fit 3",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Huawei Watch Fit 3"
+        },
+        {
+          "query": "Huawei Watch GT 5",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Huawei Watch GT 5"
+        },
+        {
+          "query": "Jordan 1 Low",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Jordan 1 Low"
+        },
+        {
+          "query": "Jordan 4 Retro",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Jordan 4 Retro"
+        },
+        {
+          "query": "Lenovo B210",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Lenovo B210"
+        },
+        {
+          "query": "Nike Air Max 90",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Nike Air Max 90"
+        },
+        {
+          "query": "Nike Dunk Low Panda",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Nike Dunk Low Panda"
+        },
+        {
+          "query": "Noise ColorFit Pro 5",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Noise ColorFit Pro 5"
+        },
+        {
+          "query": "NoiseFit Halo",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "NoiseFit Halo"
+        },
+        {
+          "query": "Nothing Ear A",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Nothing Ear A"
+        },
+        {
+          "query": "On Cloud 5",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "On Cloud 5"
+        },
+        {
+          "query": "OnePlus Watch 2",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "OnePlus Watch 2"
+        },
+        {
+          "query": "Oversized Black T Shirt",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Oversized Black T Shirt"
+        },
+        {
+          "query": "Quechua NH Escape 500",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Quechua NH Escape 500"
+        },
+        {
+          "query": "Raglan Baseball Tee",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Raglan Baseball Tee"
+        },
+        {
+          "query": "Realme Watch 3 Pro",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Realme Watch 3 Pro"
+        },
+        {
+          "query": "Realme Watch S2",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Realme Watch S2"
+        },
+        {
+          "query": "Samsung Galaxy Watch 7",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Samsung Galaxy Watch 7"
+        },
+        {
+          "query": "Samsung Galaxy Watch Ultra",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Samsung Galaxy Watch Ultra"
+        },
+        {
+          "query": "V Neck Black T Shirt",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "V Neck Black T Shirt"
+        },
+        {
+          "query": "Xiaomi Redmi Watch 5",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Xiaomi Redmi Watch 5"
+        },
+        {
+          "query": "Xiaomi Watch 2 Pro",
+          "hit": true,
+          "top_similarity": 1.0,
+          "top1_returned": "Xiaomi Watch 2 Pro"
+        }
+      ]
+    },
+    "category": {
+      "mode": "category",
+      "k": 5,
+      "queries_evaluated": 5,
+      "hits": 0,
+      "precision_at_5": 0.0,
+      "per_query": [
+        {
+          "query": "camera.jpg",
+          "expected_category": "camera",
+          "relevant_in_top_5": 0,
+          "hit": false
+        },
+        {
+          "query": "Iphone1.jpg",
+          "expected_category": "phone",
+          "relevant_in_top_5": 0,
+          "hit": false
+        },
+        {
+          "query": "keyboard.jpg",
+          "expected_category": "keyboard",
+          "relevant_in_top_5": 0,
+          "hit": false
+        },
+        {
+          "query": "laptop.webp",
+          "expected_category": "laptop",
+          "relevant_in_top_5": 0,
+          "hit": false
+        },
+        {
+          "query": "mouse.jpg",
+          "expected_category": "mouse",
+          "relevant_in_top_5": 0,
+          "hit": false
+        }
+      ]
+    }
+  },
+  "target": 0.7,
+  "catalog_size": 48,
+  "elapsed_seconds": 11.56,
+  "timestamp": "2026-06-24 03:01:20"
+}

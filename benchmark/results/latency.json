@@ -1,0 +1,50 @@
+{
+  "target_seconds": 5.0,
+  "results": {
+    "image_search": {
+      "path": "image_search",
+      "cold_seconds": 1.9348,
+      "cold_stages": {
+        "embed": 1.8527,
+        "vector_search": 0.0821,
+        "total": 1.9348
+      },
+      "warm": {
+        "mean": 0.1654,
+        "median": 0.1738,
+        "p95": 0.1795,
+        "max": 0.2154,
+        "min": 0.1279,
+        "n": 10
+      },
+      "meets_target": true
+    },
+    "text_search": {
+      "path": "text_search",
+      "cold_seconds": 0.0036,
+      "warm": {
+        "mean": 0.0026,
+        "median": 0.0026,
+        "p95": 0.0028,
+        "max": 0.0031,
+        "min": 0.0021,
+        "n": 4
+      },
+      "meets_target": true
+    },
+    "hybrid_search": {
+      "path": "hybrid_search",
+      "cold_seconds": 0.1776,
+      "warm": {
+        "mean": 0.1818,
+        "median": 0.1834,
+        "p95": 0.1871,
+        "max": 0.1875,
+        "min": 0.1715,
+        "n": 10
+      },
+      "meets_target": true
+    }
+  },
+  "timestamp": "2026-06-24 02:48:55"
+}
