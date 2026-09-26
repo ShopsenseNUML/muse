@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from pydantic import BaseModel
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from backend.services.query_intelligence_service import (
     analyze_query
@@ -36,9 +37,20 @@ def text_search(request: SearchRequest | list[SearchRequest]):
         request.query
     )
 
-    results = search_by_metadata(
-        analysis
-    )
+    try:
+        results = search_by_metadata(
+            analysis
+        )
+    except (ProgrammingError, OperationalError):
+        # e.g. the products table was never created on this machine
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Product database is not initialized. Run: "
+                "python -m backend.scripts.init_db && "
+                "python -m backend.scripts.seed_sample_products"
+            ),
+        )
 
     return {
 
