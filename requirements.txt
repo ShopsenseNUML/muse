@@ -1,0 +1,36 @@
+# ShopSense backend dependencies
+# Install with:  pip install -r requirements.txt
+
+# --- Web framework ---
+fastapi==0.138.0
+uvicorn[standard]==0.49.0
+pydantic==2.13.4
+
+# --- Database ---
+SQLAlchemy==2.0.51
+psycopg2-binary==2.9.12
+pgvector==0.4.2
+
+# --- AI / embeddings ---
+torch==2.12.1
+torchvision==0.27.1
+transformers==5.12.1
+# CLIP via openai-clip or the "clip" package:
+#   pip install clip   (or git+https://github.com/openai/CLIP.git)
+
+# --- Image handling ---
+pillow==12.2.0
+pillow-avif-plugin==1.5.5
+numpy==2.4.6
+
+# --- Price aggregation / scraping (Phase B) ---
+requests==2.34.2
+beautifulsoup4==4.15.0
+scikit-learn==1.5.2
+pandas==3.0.3
+playwright==1.60.0
+# After installing playwright, also run:
+#   python -m playwright install chromium
+
+# --- Caching (Phase B) ---
+redis==5.2.1

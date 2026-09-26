@@ -1,0 +1,5 @@
+# ShopSense GUI dependencies (separate from the backend)
+# This folder is standalone and can be deleted when you move to Flutter.
+
+requests>=2.31
+Pillow>=10.0
