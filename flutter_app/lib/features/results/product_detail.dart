@@ -1,44 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:shopsense/core/constants/sizes.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shopsense/core/providers/product_provider.dart';
 import 'package:shopsense/core/theme/app_theme.dart';
 import 'package:shopsense/core/widgets/primary_button.dart';
+import 'package:shopsense/core/widgets/product_card.dart';
 import 'package:shopsense/features/compare/compare_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+/// Full product page backed by real data.
+///
+/// [product] is a UI map (see [ProductProvider.toUiMaps]). The favorite
+/// button toggles the local wishlist, "Buy Now" opens the product URL, the
+/// share button shares the listing, and "Similar Products" shows other
+/// items from the same category.
+class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? product;
 
   const ProductDetailScreen({super.key, this.product});
 
   @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  Future<void> _openProductUrl(BuildContext context, String? url) async {
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No purchase link is available for this product.'),
+        ),
+      );
+      return;
+    }
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the product link.')),
+        );
+      }
+    }
+  }
+
+  void _shareProduct(Map<String, dynamic> product) {
+    final name = product['name'] ?? 'Product';
+    final price = 'PKR ${(product['price'] as num?)?.round() ?? 0}';
+    final url = (product['source_url'] ?? '').toString();
+    Share.share(
+      'Check out this product on ShopSense!\n\n$name\n$price'
+      '${url.isNotEmpty ? '\n$url' : ''}',
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+    if (product == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Product')),
+        body: const Center(child: Text('Product not found.')),
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
+    final productProvider = Provider.of<ProductProvider>(context);
+    final productId = product['id'].toString();
+    final isSaved = productProvider.isProductSaved(productId);
+    final category = (product['category'] ?? '').toString();
+    final similar = category.isEmpty
+        ? <Map<String, dynamic>>[]
+        : productProvider.products
+              .where(
+                (p) =>
+                    p['category'] == category &&
+                    p['id'].toString() != productId,
+              )
+              .take(8)
+              .toList();
 
-    // Use provided product or fallback to default
-    final displayProduct = product ??
-        {
-          'id': 1,
-          'name': 'Premium Cotton Kurta Shalwar',
-          'price': 2499,
-          'originalPrice': 3999,
-          'category': 'Clothing',
-          'source': 'Daraz',
-          'rating': 4.5,
-          'imageUrl':
-              'https://via.placeholder.com/600x400/6C63FF/FFFFFF?text=Product',
-          'description':
-              'This premium cotton kurta shalwar features traditional embroidery with modern design. Made from high-quality fabric, perfect for casual and formal occasions.',
-          'brand': 'Premium Wear',
-          'fabric': 'Cotton',
-          'color': 'White, Blue, Black',
-          'size': 'S, M, L, XL, XXL',
-          'occasion': 'Casual, Formal',
-        };
+    final originalPrice = (product['originalPrice'] as num?)?.toDouble();
+    final price = (product['price'] as num?)?.toDouble() ?? 0;
+    final discountPct = originalPrice != null && originalPrice > price
+        ? ((originalPrice - price) / originalPrice * 100).round()
+        : null;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppTheme.darkBackgroundStart : AppTheme.lightBackgroundColor,
+      backgroundColor: isDark
+          ? AppTheme.darkBackgroundStart
+          : AppTheme.lightBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -55,11 +108,11 @@ class ProductDetailScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: isDark
                         ? [
-                            AppTheme.darkSurfaceColor.withOpacity(0.8),
+                            AppTheme.darkSurfaceColor.withValues(alpha: 0.8),
                             AppTheme.darkBackgroundStart,
                           ]
                         : [
-                            AppTheme.lightPrimaryColor.withOpacity(0.1),
+                            AppTheme.lightPrimaryColor.withValues(alpha: 0.1),
                             AppTheme.lightBackgroundColor,
                           ],
                   ),
@@ -72,16 +125,18 @@ class ProductDetailScreen extends StatelessWidget {
                       boxShadow: isDark
                           ? [
                               BoxShadow(
-                                color: AppTheme.darkCardShadowColor
-                                    .withOpacity(0.4),
+                                color: AppTheme.darkCardShadowColor.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 30,
                                 offset: const Offset(0, 10),
                               ),
                             ]
                           : [
                               BoxShadow(
-                                color: AppTheme.lightCardShadowColor
-                                    .withOpacity(0.08),
+                                color: AppTheme.lightCardShadowColor.withValues(
+                                  alpha: 0.08,
+                                ),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -90,7 +145,7 @@ class ProductDetailScreen extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        displayProduct['imageUrl'],
+                        (product['imageUrl'] ?? '').toString(),
                         height: double.infinity,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -115,12 +170,27 @@ class ProductDetailScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: Icon(
-                  Icons.favorite_border,
-                  color: isDark
-                      ? AppTheme.darkTextPrimaryColor
-                      : AppTheme.lightTextPrimaryColor,
+                  isSaved ? Icons.favorite : Icons.favorite_border,
+                  color: isSaved
+                      ? AppTheme.lightDangerColor
+                      : (isDark
+                            ? AppTheme.darkTextPrimaryColor
+                            : AppTheme.lightTextPrimaryColor),
                 ),
-                onPressed: () {},
+                tooltip: isSaved ? 'Remove from wishlist' : 'Save to wishlist',
+                onPressed: () {
+                  productProvider.toggleSavedProduct(productId, product);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isSaved
+                            ? 'Removed from your wishlist.'
+                            : 'Saved to your wishlist.',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
               ),
               IconButton(
                 icon: Icon(
@@ -129,7 +199,8 @@ class ProductDetailScreen extends StatelessWidget {
                       ? AppTheme.darkTextPrimaryColor
                       : AppTheme.lightTextPrimaryColor,
                 ),
-                onPressed: () {},
+                tooltip: 'Share',
+                onPressed: () => _shareProduct(product),
               ),
             ],
           ),
@@ -138,7 +209,7 @@ class ProductDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: isDark
-                    ? AppTheme.darkSurfaceColor.withOpacity(0.6)
+                    ? AppTheme.darkSurfaceColor.withValues(alpha: 0.6)
                     : AppTheme.lightSurfaceColor,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
@@ -146,8 +217,8 @@ class ProductDetailScreen extends StatelessWidget {
                 border: Border(
                   top: BorderSide(
                     color: isDark
-                        ? AppTheme.darkDividerColor.withOpacity(0.3)
-                        : AppTheme.lightDividerColor.withOpacity(0.5),
+                        ? AppTheme.darkDividerColor.withValues(alpha: 0.3)
+                        : AppTheme.lightDividerColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -156,37 +227,66 @@ class ProductDetailScreen extends StatelessWidget {
                 children: [
                   // Title
                   Text(
-                    displayProduct['name'],
+                    (product['name'] ?? 'Untitled product').toString(),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: screenWidth < 600 ? 20 : 24,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      fontSize: screenWidth < 600 ? 20 : 24,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  // Rating
+                  // Source + rating
                   Row(
                     children: [
-                      RatingBarIndicator(
-                        rating: (displayProduct['rating'] as num?)
-                                ?.toDouble() ??
-                            0.0,
-                        itemBuilder: (context, index) => const Icon(
-                          Icons.star,
-                          color: AppTheme.lightWarningColor,
-                        ),
-                        itemCount: 5,
-                        itemSize: 20,
-                        direction: Axis.horizontal,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${displayProduct['rating'] ?? 'No rating'} (120 reviews)',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      if ((product['source'] ?? '').toString().isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppTheme.darkPrimaryColor
+                                        : AppTheme.lightPrimaryColor)
+                                    .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            product['source'].toString(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               color: isDark
-                                  ? AppTheme.darkTextSecondaryColor
-                                  : AppTheme.lightTextSecondaryColor,
+                                  ? AppTheme.darkPrimaryColor
+                                  : AppTheme.lightPrimaryColor,
                             ),
-                      ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if ((product['rating'] as num?) != null) ...[
+                        RatingBarIndicator(
+                          rating:
+                              (product['rating'] as num?)?.toDouble() ?? 0.0,
+                          itemBuilder: (context, index) => const Icon(
+                            Icons.star,
+                            color: AppTheme.lightWarningColor,
+                          ),
+                          itemCount: 5,
+                          itemSize: 18,
+                          direction: Axis.horizontal,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          (product['rating'] as num?)!.toStringAsFixed(1),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: isDark
+                                    ? AppTheme.darkTextSecondaryColor
+                                    : AppTheme.lightTextSecondaryColor,
+                              ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -194,20 +294,20 @@ class ProductDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'PKR ${(displayProduct['price'] as num?)?.round() ?? 0}',
-                        style:
-                            Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  color: isDark
-                                      ? AppTheme.darkPrimaryColor
-                                      : AppTheme.lightPrimaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: screenWidth < 600 ? 24 : 28,
-                                ),
+                        'PKR ${price.round()}',
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(
+                              color: isDark
+                                  ? AppTheme.darkPrimaryColor
+                                  : AppTheme.lightPrimaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: screenWidth < 600 ? 24 : 28,
+                            ),
                       ),
-                      if (displayProduct['originalPrice'] != null) ...[
+                      if (originalPrice != null) ...[
                         const SizedBox(width: 8),
                         Text(
-                          'PKR ${displayProduct['originalPrice']}',
+                          'PKR ${originalPrice.round()}',
                           style: TextStyle(
                             decoration: TextDecoration.lineThrough,
                             color: isDark
@@ -216,6 +316,8 @@ class ProductDetailScreen extends StatelessWidget {
                             fontSize: screenWidth < 600 ? 14 : 16,
                           ),
                         ),
+                      ],
+                      if (discountPct != null) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -223,11 +325,13 @@ class ProductDetailScreen extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.lightSuccessColor.withOpacity(0.1),
+                            color: AppTheme.lightSuccessColor.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            '37% OFF',
+                            '$discountPct% OFF',
                             style: TextStyle(
                               color: AppTheme.lightSuccessColor,
                               fontWeight: FontWeight.bold,
@@ -239,41 +343,35 @@ class ProductDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Buttons with Glass effect in dark mode
-                  Container(
-                    decoration: isDark
-                        ? BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppTheme.darkDividerColor.withOpacity(0.3),
-                            ),
-                          )
-                        : null,
-                    child: Column(
-                      children: [
-                        PrimaryButton(
-                          text: 'Buy Now on ${displayProduct['source']}',
-                          icon: Icons.shopping_bag,
-                          onPressed: () {},
+                  // Action buttons
+                  Column(
+                    children: [
+                      PrimaryButton(
+                        text:
+                            'Buy Now${(product['source'] ?? '').toString().isNotEmpty ? ' on ${product['source']}' : ''}',
+                        icon: Icons.shopping_bag,
+                        onPressed: () => _openProductUrl(
+                          context,
+                          (product['source_url'] ?? '').toString(),
                         ),
-                        const SizedBox(height: 12),
-                        PrimaryButton(
-                          text: 'Compare Prices',
-                          icon: Icons.compare_arrows,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CompareScreen(
-                                  query: displayProduct['name']?.toString(),
-                                ),
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryButton(
+                        text: 'Compare Prices',
+                        icon: Icons.compare_arrows,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CompareScreen(
+                                query: product['name']?.toString(),
                               ),
-                            );
-                          },
-                          isOutlined: true,
-                        ),
-                      ],
-                    ),
+                            ),
+                          );
+                        },
+                        isOutlined: true,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
@@ -281,19 +379,21 @@ class ProductDetailScreen extends StatelessWidget {
                   Text(
                     'Product Details',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: screenWidth < 600 ? 16 : 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontSize: screenWidth < 600 ? 16 : 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    displayProduct['description'] ?? 'No description available',
+                    (product['description'] ?? '').toString().isNotEmpty
+                        ? product['description'].toString()
+                        : 'No description available.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.6,
-                          color: isDark
-                              ? AppTheme.darkTextSecondaryColor
-                              : AppTheme.lightTextSecondaryColor,
-                        ),
+                      height: 1.6,
+                      color: isDark
+                          ? AppTheme.darkTextSecondaryColor
+                          : AppTheme.lightTextSecondaryColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -301,68 +401,110 @@ class ProductDetailScreen extends StatelessWidget {
                   Text(
                     'Specifications',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: screenWidth < 600 ? 16 : 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontSize: screenWidth < 600 ? 16 : 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppTheme.darkSurfaceColor.withOpacity(0.3)
+                          ? AppTheme.darkSurfaceColor.withValues(alpha: 0.3)
                           : AppTheme.lightBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? AppTheme.darkDividerColor.withOpacity(0.3)
-                            : AppTheme.lightDividerColor.withOpacity(0.5),
+                            ? AppTheme.darkDividerColor.withValues(alpha: 0.3)
+                            : AppTheme.lightDividerColor.withValues(alpha: 0.5),
                       ),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: Column(
                       children: [
                         _buildSpecItem(
-                            'Brand', displayProduct['brand'] ?? 'N/A', isDark),
-                        _buildDivider(isDark),
-                        _buildSpecItem('Fabric',
-                            displayProduct['fabric'] ?? 'N/A', isDark),
+                          'Brand',
+                          (product['brand'] ?? '').toString().isNotEmpty
+                              ? product['brand'].toString()
+                              : 'N/A',
+                          isDark,
+                        ),
                         _buildDivider(isDark),
                         _buildSpecItem(
-                            'Color', displayProduct['color'] ?? 'N/A', isDark),
+                          'Category',
+                          (product['category'] ?? '').toString().isNotEmpty
+                              ? product['category'].toString()
+                              : 'N/A',
+                          isDark,
+                        ),
                         _buildDivider(isDark),
                         _buildSpecItem(
-                            'Size', displayProduct['size'] ?? 'N/A', isDark),
-                        _buildDivider(isDark),
-                        _buildSpecItem('Occasion',
-                            displayProduct['occasion'] ?? 'N/A', isDark),
+                          'Platform',
+                          (product['source'] ?? '').toString().isNotEmpty
+                              ? product['source'].toString()
+                              : 'N/A',
+                          isDark,
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Similar Products
-                  Text(
-                    'Similar Products',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: screenWidth < 600 ? 16 : 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 220,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _buildSimilarProduct('PKR 1,999', '4.0', isDark),
-                        _buildSimilarProduct('PKR 2,199', '4.2', isDark),
-                        _buildSimilarProduct('PKR 2,899', '4.8', isDark),
-                        _buildSimilarProduct('PKR 1,799', '3.9', isDark),
-                      ],
+                  // Similar Products (real, from the same category)
+                  if (similar.isNotEmpty) ...[
+                    Text(
+                      'Similar Products',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontSize: screenWidth < 600 ? 16 : 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 250,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: similar.length,
+                        itemBuilder: (context, index) {
+                          final item = similar[index];
+                          final itemId = item['id'].toString();
+                          return Container(
+                            width: 160,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: ProductCard(
+                              productId: itemId,
+                              imageUrl: (item['imageUrl'] ?? '').toString(),
+                              title: (item['name'] ?? 'Untitled').toString(),
+                              price:
+                                  'PKR ${(item['price'] as num?)?.round() ?? 0}',
+                              source: (item['source'] ?? '').toString(),
+                              rating: (item['rating'] as num?)?.toDouble(),
+                              isSaved: productProvider.isProductSaved(itemId),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProductDetailScreen(product: item),
+                                  ),
+                                );
+                              },
+                              onSaveTap: () {
+                                productProvider.toggleSavedProduct(
+                                  itemId,
+                                  item,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
@@ -412,109 +554,8 @@ class ProductDetailScreen extends StatelessWidget {
     return Divider(
       height: 0,
       color: isDark
-          ? AppTheme.darkDividerColor.withOpacity(0.3)
-          : AppTheme.lightDividerColor.withOpacity(0.5),
-    );
-  }
-
-  Widget _buildSimilarProduct(String price, String rating, bool isDark) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppTheme.darkSurfaceColor.withOpacity(0.4)
-            : AppTheme.lightSurfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? AppTheme.darkDividerColor.withOpacity(0.3)
-              : AppTheme.lightDividerColor.withOpacity(0.5),
-        ),
-        boxShadow: isDark
-            ? [
-                BoxShadow(
-                  color: AppTheme.darkCardShadowColor.withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: AppTheme.lightCardShadowColor.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurfaceColor : Colors.grey[200],
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.image,
-                  size: 40,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Product Name',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? AppTheme.darkTextSecondaryColor
-                        : AppTheme.lightTextSecondaryColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: isDark
-                        ? AppTheme.darkPrimaryColor
-                        : AppTheme.lightPrimaryColor,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.star,
-                        size: 12, color: AppTheme.lightWarningColor),
-                    const SizedBox(width: 2),
-                    Text(
-                      rating,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark
-                            ? AppTheme.darkTextSecondaryColor
-                            : AppTheme.lightTextSecondaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          ? AppTheme.darkDividerColor.withValues(alpha: 0.3)
+          : AppTheme.lightDividerColor.withValues(alpha: 0.5),
     );
   }
 }

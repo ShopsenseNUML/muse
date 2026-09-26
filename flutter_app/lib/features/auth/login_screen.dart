@@ -28,13 +28,62 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _showForgotPasswordDialog(BuildContext context) {
+    final emailController = TextEditingController(text: _emailController.text);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your account email and we will send you a reset link.',
+            ),
+            const SizedBox(height: 16),
+            CustomTextField(
+              hint: 'Email address',
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: const Icon(Icons.email_outlined),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final email = emailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid email address.'),
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Password reset link sent to $email.')),
+              );
+            },
+            child: const Text('Send Link'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.paddingLarge),
           child: Form(
             key: _formKey,
@@ -45,8 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   _isLogin ? 'Welcome Back!' : 'Create Account',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: AppSizes.paddingSmall),
                 Text(
@@ -54,8 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? 'Sign in to continue shopping'
                       : 'Join ShopSense and start discovering products',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).hintColor,
-                      ),
+                    color: Theme.of(context).hintColor,
+                  ),
                 ),
                 const SizedBox(height: AppSizes.paddingXL),
                 CustomTextField(
@@ -68,8 +117,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -98,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Implement forgot password
+                        _showForgotPasswordDialog(context);
                       },
                       child: const Text(
                         AppStrings.forgotPassword,

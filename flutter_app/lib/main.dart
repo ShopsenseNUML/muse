@@ -55,8 +55,20 @@ class ShopSenseApp extends StatelessWidget {
               },
               '/history': (context) => const HistoryScreen(),
               '/profile': (context) => const ProfileScreen(),
-              '/results': (context) =>
-                  const ResultsScreen(isImageSearch: false),
+              '/results': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is Map<String, dynamic>) {
+                  final raw = args['products'];
+                  return ResultsScreen(
+                    products: raw is List
+                        ? raw.whereType<Map<String, dynamic>>().toList()
+                        : const [],
+                    title: args['title']?.toString() ?? 'Results',
+                    translatedQuery: args['translatedQuery']?.toString(),
+                  );
+                }
+                return const ResultsScreen(products: [], title: 'Results');
+              },
               '/product-detail': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments;
                 return ProductDetailScreen(

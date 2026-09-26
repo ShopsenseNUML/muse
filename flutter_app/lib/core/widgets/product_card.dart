@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:shopsense/core/constants/sizes.dart';
 import 'package:shopsense/core/theme/app_theme.dart';
 import 'package:shopsense/core/widgets/shimmer_loader.dart';
-import 'package:shopsense/core/providers/auth_provider.dart';
-import 'package:shopsense/core/providers/product_provider.dart';
-import 'package:provider/provider.dart';
 
 class ProductCard extends StatefulWidget {
   final String imageUrl;
@@ -59,39 +55,46 @@ class _ProductCardState extends State<ProductCard> {
             : Matrix4.identity(),
         decoration: BoxDecoration(
           color: isDark
-              ? AppTheme.darkSurfaceColor.withOpacity(0.6)
+              ? AppTheme.darkSurfaceColor.withValues(alpha: 0.6)
               : AppTheme.lightSurfaceColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDark
-                ? AppTheme.darkDividerColor.withOpacity(_isHovered ? 0.6 : 0.3)
-                : AppTheme.lightDividerColor
-                    .withOpacity(_isHovered ? 0.3 : 0.05),
-            width: isDark ? 1 : 1,
+                ? AppTheme.darkDividerColor.withValues(
+                    alpha: _isHovered ? 0.6 : 0.3,
+                  )
+                : AppTheme.lightDividerColor.withValues(
+                    alpha: _isHovered ? 0.3 : 0.05,
+                  ),
+            width: 1,
           ),
           boxShadow: isDark
               ? [
                   BoxShadow(
-                    color: AppTheme.darkCardShadowColor.withOpacity(0.4),
+                    color: AppTheme.darkCardShadowColor.withValues(alpha: 0.4),
                     blurRadius: 32,
                     offset: const Offset(0, 8),
                   ),
                   if (_isHovered)
                     BoxShadow(
-                      color: AppTheme.darkPrimaryColor.withOpacity(0.15),
+                      color: AppTheme.darkPrimaryColor.withValues(alpha: 0.15),
                       blurRadius: 20,
                       offset: const Offset(0, 0),
                     ),
                 ]
               : [
                   BoxShadow(
-                    color: AppTheme.lightCardShadowColor.withOpacity(0.05),
+                    color: AppTheme.lightCardShadowColor.withValues(
+                      alpha: 0.05,
+                    ),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                   ),
                   if (_isHovered)
                     BoxShadow(
-                      color: AppTheme.lightCardShadowColor.withOpacity(0.08),
+                      color: AppTheme.lightCardShadowColor.withValues(
+                        alpha: 0.08,
+                      ),
                       blurRadius: 30,
                       offset: const Offset(0, 15),
                     ),
@@ -145,7 +148,9 @@ class _ProductCardState extends State<ProductCard> {
                               colors: [
                                 Colors.transparent,
                                 Colors.transparent,
-                                AppTheme.darkSurfaceColor.withOpacity(0.3),
+                                AppTheme.darkSurfaceColor.withValues(
+                                  alpha: 0.3,
+                                ),
                               ],
                             ),
                           ),
@@ -163,17 +168,21 @@ class _ProductCardState extends State<ProductCard> {
                           ),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? AppTheme.darkSurfaceColor.withOpacity(0.8)
-                                : Colors.black.withOpacity(0.7),
+                                ? AppTheme.darkSurfaceColor.withValues(
+                                    alpha: 0.8,
+                                  )
+                                : Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(6),
                             border: isDark
                                 ? Border.all(
-                                    color: AppTheme.darkDividerColor
-                                        .withOpacity(0.3),
+                                    color: AppTheme.darkDividerColor.withValues(
+                                      alpha: 0.3,
+                                    ),
                                   )
                                 : null,
-                            backgroundBlendMode:
-                                isDark ? BlendMode.srcOver : null,
+                            backgroundBlendMode: isDark
+                                ? BlendMode.srcOver
+                                : null,
                           ),
                           child: Text(
                             widget.source!,
@@ -194,39 +203,37 @@ class _ProductCardState extends State<ProductCard> {
                       child: MouseRegion(
                         child: GestureDetector(
                           onTap: () {
-                            final authProvider = Provider.of<AuthProvider>(
-                                context,
-                                listen: false);
-                            if (!authProvider.isAuthenticated) {
-                              _showLoginRequiredDialog(context);
-                            } else {
-                              widget.onSaveTap?.call();
-                            }
+                            // Saving is local to the device — no login needed.
+                            widget.onSaveTap?.call();
                           },
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? AppTheme.darkSurfaceColor.withOpacity(0.6)
-                                  : Colors.white.withOpacity(0.9),
+                                  ? AppTheme.darkSurfaceColor.withValues(
+                                      alpha: 0.6,
+                                    )
+                                  : Colors.white.withValues(alpha: 0.9),
                               shape: BoxShape.circle,
                               border: isDark
                                   ? Border.all(
                                       color: AppTheme.darkDividerColor
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                     )
                                   : null,
                               boxShadow: isDark
                                   ? [
                                       BoxShadow(
                                         color: AppTheme.darkCardShadowColor
-                                            .withOpacity(0.3),
+                                            .withValues(alpha: 0.3),
                                         blurRadius: 8,
                                       ),
                                     ]
                                   : [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 8,
                                       ),
                                     ],
@@ -238,8 +245,8 @@ class _ProductCardState extends State<ProductCard> {
                               color: widget.isSaved
                                   ? AppTheme.lightDangerColor
                                   : (isDark
-                                      ? AppTheme.darkTextSecondaryColor
-                                      : Colors.grey[600]),
+                                        ? AppTheme.darkTextSecondaryColor
+                                        : Colors.grey[600]),
                               size: 16,
                             ),
                           ),
@@ -261,10 +268,10 @@ class _ProductCardState extends State<ProductCard> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            height: 1.3,
-                            fontSize: isMobile ? 12 : 13,
-                          ),
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                        fontSize: isMobile ? 12 : 13,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     // Rating
@@ -285,13 +292,13 @@ class _ProductCardState extends State<ProductCard> {
                           const SizedBox(width: 4),
                           Text(
                             widget.rating!.toStringAsFixed(1),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      fontSize: isMobile ? 10 : 11,
-                                      color: isDark
-                                          ? AppTheme.darkTextSecondaryColor
-                                          : AppTheme.lightTextSecondaryColor,
-                                    ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontSize: isMobile ? 10 : 11,
+                                  color: isDark
+                                      ? AppTheme.darkTextSecondaryColor
+                                      : AppTheme.lightTextSecondaryColor,
+                                ),
                           ),
                         ],
                       ),
@@ -304,9 +311,7 @@ class _ProductCardState extends State<ProductCard> {
                         Expanded(
                           child: Text(
                             widget.price,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   color: isDark
                                       ? AppTheme.darkPrimaryColor
@@ -317,29 +322,6 @@ class _ProductCardState extends State<ProductCard> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: (isDark
-                                    ? AppTheme.darkSuccessColor
-                                    : AppTheme.lightSuccessColor)
-                                .withOpacity(isDark ? 0.15 : 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'In Stock',
-                            style: TextStyle(
-                              fontSize: isMobile ? 8 : 9,
-                              color: isDark
-                                  ? AppTheme.darkSuccessColor
-                                  : AppTheme.lightSuccessColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ],
@@ -348,41 +330,6 @@ class _ProductCardState extends State<ProductCard> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showLoginRequiredDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? AppTheme.darkSurfaceColor.withOpacity(0.9)
-            : AppTheme.lightSurfaceColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text('Login Required'),
-        content: const Text(
-          'Please login to save items to your wishlist.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/login');
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.lightPrimaryColor,
-            ),
-            child: const Text('Login'),
-          ),
-        ],
       ),
     );
   }

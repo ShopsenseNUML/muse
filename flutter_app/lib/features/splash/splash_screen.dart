@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopsense/core/theme/app_theme.dart';
 import 'package:shopsense/features/home/home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shopsense/features/onboarding/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,19 +15,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _navigateNext();
   }
 
-  Future<void> _navigateToHome() async {
+  Future<void> _navigateNext() async {
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
+    if (!mounted) return;
+    // First launch -> onboarding; otherwise straight to home.
+    bool isFirstTime = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      isFirstTime = prefs.getBool('isFirstTime') ?? true;
+    } catch (_) {
+      // If storage is unavailable, fall through to home.
+      isFirstTime = false;
     }
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            isFirstTime ? const OnboardingScreen() : const HomeScreen(),
+      ),
+    );
   }
 
   @override
@@ -43,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ? [AppTheme.darkBackgroundColor, AppTheme.darkSurfaceColor]
                 : [
                     AppTheme.lightPrimaryColor,
-                    AppTheme.lightPrimaryColor.withValues(alpha: 0.8)
+                    AppTheme.lightPrimaryColor.withValues(alpha: 0.8),
                   ],
           ),
         ),
@@ -88,8 +99,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 'Find what you see',
                 style: TextStyle(
                   fontSize: 16,
-                  color:
-                      isDark ? AppTheme.darkTextSecondaryColor : Colors.white70,
+                  color: isDark
+                      ? AppTheme.darkTextSecondaryColor
+                      : Colors.white70,
                 ),
               ),
               const SizedBox(height: 48),

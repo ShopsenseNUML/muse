@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shopsense/core/constants/strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopsense/core/models/product.dart';
 import 'package:shopsense/core/services/api_client.dart';
 
@@ -28,14 +28,23 @@ class SearchProvider extends ChangeNotifier {
     _loadRecentSearches();
   }
 
-  void _loadRecentSearches() {
-    // TODO: Load from local storage
-    _recentSearches = [
-      'Kurta Shalwar',
-      'Sneakers',
-      'Smartphone',
-      'Sunglasses',
-    ];
+  Future<void> _loadRecentSearches() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _recentSearches = prefs.getStringList('recent_searches') ?? [];
+      notifyListeners();
+    } catch (_) {
+      _recentSearches = [];
+    }
+  }
+
+  Future<void> _persistRecentSearches() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('recent_searches', _recentSearches);
+    } catch (_) {
+      // Persistence is best-effort; search still works without it.
+    }
   }
 
   void addRecentSearch(String query) {
@@ -45,19 +54,9 @@ class SearchProvider extends ChangeNotifier {
       if (_recentSearches.length > 10) {
         _recentSearches.removeLast();
       }
+      _persistRecentSearches();
       notifyListeners();
     }
-  }
-
-  /// Local Roman Urdu keyword mapping (the backend also translates).
-  String translateRomanUrdu(String query) {
-    final lowerQuery = query.toLowerCase();
-    for (var entry in AppStrings.romanUrduMap.entries) {
-      if (lowerQuery.contains(entry.key)) {
-        return query.replaceAll(entry.key, entry.value);
-      }
-    }
-    return query;
   }
 
   void setSearching(bool value) {
@@ -67,6 +66,7 @@ class SearchProvider extends ChangeNotifier {
 
   void clearRecentSearches() {
     _recentSearches.clear();
+    _persistRecentSearches();
     notifyListeners();
   }
 

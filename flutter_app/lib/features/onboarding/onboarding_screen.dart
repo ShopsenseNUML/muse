@@ -30,6 +30,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: TextButton(
+                onPressed: _finishOnboarding,
+                child: const Text('Skip'),
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -77,18 +84,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             item.title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSizes.paddingMedium),
           Text(
             item.description,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).hintColor,
-                  height: 1.5,
-                ),
+              color: Theme.of(context).hintColor,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -130,6 +137,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstTime', false);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
+  }
+
   Widget _buildButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
@@ -154,18 +172,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               text: _currentIndex == onboardingData.length - 1
                   ? 'Get Started'
                   : 'Next',
-              onPressed: () async {
+              onPressed: () {
                 if (_currentIndex == onboardingData.length - 1) {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('isFirstTime', false);
-                  if (mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
-                  }
+                  _finishOnboarding();
                 } else {
                   _pageController.nextPage(
                     duration: const Duration(milliseconds: 300),

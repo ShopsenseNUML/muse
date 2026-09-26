@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopsense/core/models/product.dart';
 import 'package:shopsense/core/services/api_client.dart';
 
@@ -8,8 +11,12 @@ import 'package:shopsense/core/services/api_client.dart';
 /// maps keep the exact key shape the existing UI expects
 /// (`id`, `name`, `price`, `imageUrl`, `source`, `rating`, `brand`,
 /// `category`, `description`, ...), so no screen needs to change.
-/// Saved products and search history stay local to the device.
+/// Saved products and search history stay local to the device and are
+/// persisted with SharedPreferences.
 class ProductProvider extends ChangeNotifier {
+  static const _savedKey = 'saved_products';
+  static const _historyKey = 'search_history';
+
   final ApiClient _api;
 
   List<Map<String, dynamic>> _products = [];
@@ -26,6 +33,7 @@ class ProductProvider extends ChangeNotifier {
   String? get catalogError => _catalogError;
 
   ProductProvider({ApiClient? api}) : _api = api ?? ApiClient() {
+    _loadLocalData();
     loadCatalog();
   }
 
@@ -67,6 +75,13 @@ class ProductProvider extends ChangeNotifier {
     } else {
       _savedProducts.add(product);
     }
+    _persistSavedProducts();
+    notifyListeners();
+  }
+
+  void clearSavedProducts() {
+    _savedProducts = [];
+    _persistSavedProducts();
     notifyListeners();
   }
 
@@ -75,34 +90,87 @@ class ProductProvider extends ChangeNotifier {
     if (_searchHistory.length > 20) {
       _searchHistory.removeLast();
     }
+    _persistSearchHistory();
     notifyListeners();
   }
 
   void clearSearchHistory() {
-    _searchHistory.clear();
+    _searchHistory = [];
+    _persistSearchHistory();
     notifyListeners();
   }
 
-  List<Map<String, dynamic>> getProductsByCategory(String category) {
-    if (category == 'All') {
-      return _products;
+  Future<void> _loadLocalData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final savedJson = prefs.getString(_savedKey);
+      if (savedJson != null) {
+        final decoded = jsonDecode(savedJson);
+        if (decoded is List) {
+          _savedProducts = decoded
+              .whereType<Map>()
+              .map(_stringifyKeys)
+              .toList();
+        }
+      }
+
+      final historyJson = prefs.getString(_historyKey);
+      if (historyJson != null) {
+        final decoded = jsonDecode(historyJson);
+        if (decoded is List) {
+          _searchHistory = decoded
+              .whereType<Map>()
+              .map((e) => _stringifyKeys(e))
+              .map(
+                (m) => {
+                  'query': (m['query'] ?? '').toString(),
+                  'timestamp': m['timestamp'] is String
+                      ? DateTime.tryParse(m['timestamp'] as String) ??
+                            DateTime.now()
+                      : DateTime.now(),
+                },
+              )
+              .toList();
+        }
+      }
+      notifyListeners();
+    } catch (_) {
+      // Local storage unavailable — keep the in-memory lists.
     }
-    return _products.where((p) => p['category'] == category).toList();
   }
 
-  /// Local filter over the loaded catalog (the backend search endpoints
-  /// live in [SearchProvider]).
-  List<Map<String, dynamic>> searchProducts(String query) {
-    final lowerQuery = query.toLowerCase();
-    return _products.where((product) {
-      final name = (product['name'] ?? '').toString().toLowerCase();
-      final category = (product['category'] ?? '').toString().toLowerCase();
-      final brand = (product['brand'] ?? '').toString().toLowerCase();
-      return name.contains(lowerQuery) ||
-          category.contains(lowerQuery) ||
-          brand.contains(lowerQuery);
-    }).toList();
+  Future<void> _persistSavedProducts() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_savedKey, jsonEncode(_savedProducts));
+    } catch (_) {
+      // Non-fatal: wishlist still works for this session.
+    }
   }
+
+  Future<void> _persistSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encodable = _searchHistory
+          .map(
+            (e) => {
+              'query': e['query'],
+              'timestamp':
+                  (e['timestamp'] as DateTime?)?.toIso8601String() ??
+                  DateTime.now().toIso8601String(),
+            },
+          )
+          .toList();
+      await prefs.setString(_historyKey, jsonEncode(encodable));
+    } catch (_) {
+      // Non-fatal: history still works for this session.
+    }
+  }
+
+  /// Normalizes a decoded JSON map to `Map<String, dynamic>`.
+  static Map<String, dynamic> _stringifyKeys(Map m) =>
+      m.map((k, v) => MapEntry(k.toString(), v));
 
   /// Convert raw backend [Product]s to the UI map shape.
   static List<Map<String, dynamic>> toUiMaps(List<Product> products) =>

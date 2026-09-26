@@ -75,12 +75,10 @@ class Product {
   String get displayPrice {
     if (price == null) return 'Price unavailable';
     final rounded = price!.round();
-    final withCommas = rounded
-        .toString()
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+    final withCommas = rounded.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
     return 'PKR $withCommas';
   }
 

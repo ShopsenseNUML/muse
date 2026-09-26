@@ -44,9 +44,9 @@ class CustomTextField extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSizes.paddingSmall),
         ],
@@ -73,9 +73,7 @@ class CustomTextField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              borderSide: BorderSide(
-                color: Theme.of(context).dividerColor,
-              ),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
@@ -86,17 +84,15 @@ class CustomTextField extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              borderSide: const BorderSide(
-                color: AppTheme.dangerColor,
-              ),
+              borderSide: const BorderSide(color: AppTheme.dangerColor),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSizes.paddingMedium,
               vertical: AppSizes.paddingMedium,
             ),
             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).hintColor,
-                ),
+              color: Theme.of(context).hintColor,
+            ),
           ),
           style: Theme.of(context).textTheme.bodyMedium,
         ),

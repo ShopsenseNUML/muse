@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shopsense/core/constants/sizes.dart';
 import 'package:shopsense/core/theme/app_theme.dart';
 import 'package:shopsense/core/widgets/primary_button.dart';
 import 'package:shopsense/core/services/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// Side-by-side price comparison backed by the live backend
-/// (`POST /search/comparison/text`).
+/// Side-by-side price comparison backed by the live backend.
+///
+/// Text comparison hits `POST /search/comparison/text`; image comparison
+/// hits `POST /search/comparison/image` (the matched product is shown
+/// alongside the offers).
 ///
 /// Opens with an optional [query] (e.g. the product title from the
 /// detail screen); the user can also type a product name directly.
@@ -22,6 +27,7 @@ class CompareScreen extends StatefulWidget {
 class _CompareScreenState extends State<CompareScreen> {
   final ApiClient _api = ApiClient();
   final TextEditingController _queryController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   bool _isLoading = false;
   String? _error;
@@ -70,6 +76,40 @@ class _CompareScreenState extends State<CompareScreen> {
     }
   }
 
+  /// Compare by photo: the backend matches the image to a catalog product
+  /// and returns platform offers for it.
+  Future<void> _runImageComparison(ImageSource source) async {
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 1024,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _comparison = null;
+    });
+    try {
+      final result = await _api.compareImage(picked);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        if (result.error != null) {
+          _error = result.error;
+        } else {
+          _comparison = result;
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.message;
+      });
+    }
+  }
+
   Color _platformColor(String platform) {
     switch (platform.toLowerCase()) {
       case 'daraz':
@@ -83,15 +123,26 @@ class _CompareScreenState extends State<CompareScreen> {
     }
   }
 
+  Future<void> _openOfferUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      // Fall back to copying the link so the user can open it manually.
+      await Clipboard.setData(ClipboardData(text: url));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open the link — copied to clipboard.'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Compare Prices'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Compare Prices'), elevation: 0),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingMedium),
         children: [
@@ -114,8 +165,9 @@ class _CompareScreenState extends State<CompareScreen> {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed:
-                    _isLoading ? null : () => _runComparison(_queryController.text),
+                onPressed: _isLoading
+                    ? null
+                    : () => _runComparison(_queryController.text),
                 child: _isLoading
                     ? const SizedBox(
                         height: 18,
@@ -123,6 +175,31 @@ class _CompareScreenState extends State<CompareScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Compare'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.paddingSmall),
+          // Image comparison entry point
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _runImageComparison(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt, size: 18),
+                  label: const Text('Compare by Camera'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _runImageComparison(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library, size: 18),
+                  label: const Text('Compare by Photo'),
+                ),
               ),
             ],
           ),
@@ -147,11 +224,13 @@ class _CompareScreenState extends State<CompareScreen> {
                 child: Text(
                   'Translated: "${_comparison!.translatedQuery}"',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.amber[700],
-                        fontStyle: FontStyle.italic,
-                      ),
+                    color: Colors.amber[700],
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
+            if (_comparison!.matchedProduct != null)
+              _buildMatchedProduct(context, _comparison!.matchedProduct!),
             _buildTableHeader(context),
             ..._comparison!.offers.map(
               (offer) => _buildComparisonItem(
@@ -194,8 +273,8 @@ class _CompareScreenState extends State<CompareScreen> {
               'Enter a product name to compare prices across platforms.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).hintColor,
-                  ),
+                color: Theme.of(context).hintColor,
+              ),
             ),
           ],
         ),
@@ -223,6 +302,74 @@ class _CompareScreenState extends State<CompareScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Shows the catalog product the backend matched an uploaded photo to.
+  Widget _buildMatchedProduct(
+    BuildContext context,
+    Map<String, dynamic> product,
+  ) {
+    final name = (product['name'] ?? 'Matched product').toString();
+    final brand = (product['brand'] ?? '').toString();
+    final imageUrl = (product['image_url'] ?? product['imageUrl'] ?? '')
+        .toString();
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingMedium),
+      padding: const EdgeInsets.all(AppSizes.paddingMedium),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            child: imageUrl.isEmpty
+                ? Container(
+                    width: 56,
+                    height: 56,
+                    color: Theme.of(context).dividerColor,
+                    child: const Icon(Icons.image_not_supported),
+                  )
+                : Image.network(
+                    imageUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 56,
+                      height: 56,
+                      color: Theme.of(context).dividerColor,
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: AppSizes.paddingMedium),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Matched product',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+                Text(
+                  brand.isEmpty ? name : '$brand $name',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -346,22 +493,12 @@ class _CompareScreenState extends State<CompareScreen> {
             child: OutlinedButton(
               onPressed: offer.url == null
                   ? null
-                  : () {
-                      Clipboard.setData(ClipboardData(text: offer.url!));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Product link copied to clipboard.'),
-                        ),
-                      );
-                    },
+                  : () => _openOfferUrl(context, offer.url!),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 side: const BorderSide(color: AppTheme.primaryColor),
               ),
-              child: const Text(
-                'View',
-                style: TextStyle(fontSize: 12),
-              ),
+              child: const Text('View', style: TextStyle(fontSize: 12)),
             ),
           ),
         ],
@@ -387,18 +524,14 @@ class _CompareScreenState extends State<CompareScreen> {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.check_circle,
-            color: Colors.white,
-            size: 40,
-          ),
+          const Icon(Icons.check_circle, color: Colors.white, size: 40),
           const SizedBox(height: AppSizes.paddingSmall),
           Text(
             'Best Deal',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(

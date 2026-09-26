@@ -1,110 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shopsense/core/constants/sizes.dart';
-import 'package:shopsense/core/theme/app_theme.dart';
+import 'package:shopsense/core/providers/product_provider.dart';
+import 'package:shopsense/features/search/search_screen.dart';
 
+/// Search history, backed by [ProductProvider.searchHistory] (local).
+///
+/// Tapping an entry re-runs that search.
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context);
+    final history = productProvider.searchHistory;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search History'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              // TODO: Implement clear history
-              _showClearHistoryDialog(context);
-            },
-          ),
+          if (history.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Clear history',
+              onPressed: () =>
+                  _showClearHistoryDialog(context, productProvider),
+            ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search History List
-          Expanded(
-            child: ListView.builder(
+      body: history.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history,
+                    size: 64,
+                    color: Theme.of(context).hintColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No search history yet',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your recent searches will appear here',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
               padding: const EdgeInsets.all(AppSizes.paddingMedium),
-              itemCount: 5,
+              itemCount: history.length,
               itemBuilder: (context, index) {
+                final entry = history[index];
                 return _buildHistoryItem(
                   context,
-                  'Premium Cotton Kurta Shalwar',
-                  DateTime.now().subtract(Duration(hours: index + 1)),
-                  'PKR 2,499',
+                  (entry['query'] ?? '').toString(),
+                  entry['timestamp'] as DateTime?,
                 );
               },
             ),
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildHistoryItem(
     BuildContext context,
-    String product,
-    DateTime date,
-    String price,
+    String query,
+    DateTime? timestamp,
   ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSizes.paddingMedium),
-      padding: const EdgeInsets.all(AppSizes.paddingMedium),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingSmall),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            ),
-            child: const Icon(
-              Icons.image,
-              color: Colors.grey,
-            ),
+      child: ListTile(
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
-          const SizedBox(width: AppSizes.paddingMedium),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Searched ${_timeAgo(date)}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          child: Icon(
+            Icons.search,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        title: Text(query, style: const TextStyle(fontWeight: FontWeight.w500)),
+        subtitle: timestamp == null
+            ? null
+            : Text('Searched ${_timeAgo(timestamp)}'),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SearchScreen(initialQuery: query),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios, size: 16),
-            onPressed: () {
-              Navigator.pushNamed(context, '/product-detail');
-            },
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -122,7 +123,10 @@ class HistoryScreen extends StatelessWidget {
     }
   }
 
-  void _showClearHistoryDialog(BuildContext context) {
+  void _showClearHistoryDialog(
+    BuildContext context,
+    ProductProvider productProvider,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -137,12 +141,13 @@ class HistoryScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              productProvider.clearSearchHistory();
               Navigator.pop(context);
-              // TODO: Implement clear history
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Search history cleared.')),
+              );
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Clear'),
           ),
         ],

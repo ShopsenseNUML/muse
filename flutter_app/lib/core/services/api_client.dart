@@ -27,8 +27,8 @@ class ApiClient {
   final http.Client _http;
 
   ApiClient({String? baseUrl, http.Client? httpClient})
-      : baseUrl = baseUrl ?? ApiConstants.baseUrl,
-        _http = httpClient ?? http.Client();
+    : baseUrl = baseUrl ?? ApiConstants.baseUrl,
+      _http = httpClient ?? http.Client();
 
   void dispose() => _http.close();
 
@@ -41,9 +41,7 @@ class ApiClient {
 
   dynamic _decode(http.Response res, String what) {
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw ApiException(
-        'Backend error ($what): HTTP ${res.statusCode}.',
-      );
+      throw ApiException('Backend error ($what): HTTP ${res.statusCode}.');
     }
     try {
       return json.decode(res.body);
@@ -107,9 +105,7 @@ class ApiClient {
           filename: image.name.isNotEmpty ? image.name : 'query.jpg',
         ),
       );
-      final streamed = await request.send().timeout(
-            ApiConstants.uploadTimeout,
-          );
+      final streamed = await request.send().timeout(ApiConstants.uploadTimeout);
       final res = await http.Response.fromStream(streamed);
       return _parseResults(_decode(res, 'image search'));
     } on TimeoutException {
@@ -134,9 +130,7 @@ class ApiClient {
           filename: image.name.isNotEmpty ? image.name : 'query.jpg',
         ),
       );
-      final streamed = await request.send().timeout(
-            ApiConstants.uploadTimeout,
-          );
+      final streamed = await request.send().timeout(ApiConstants.uploadTimeout);
       final res = await http.Response.fromStream(streamed);
       return _parseResults(_decode(res, 'hybrid search'));
     } on TimeoutException {
@@ -154,9 +148,9 @@ class ApiClient {
 
   /// GET /products/?limit= -> {count, products}
   Future<List<Product>> getProducts({int limit = 20}) async {
-    final uri = Uri.parse('$baseUrl/products/').replace(
-      queryParameters: {'limit': limit.toString()},
-    );
+    final uri = Uri.parse(
+      '$baseUrl/products/',
+    ).replace(queryParameters: {'limit': limit.toString()});
     late http.Response res;
     try {
       res = await _http.get(uri).timeout(ApiConstants.requestTimeout);
@@ -240,9 +234,7 @@ class ApiClient {
           filename: image.name.isNotEmpty ? image.name : 'query.jpg',
         ),
       );
-      final streamed = await request.send().timeout(
-            ApiConstants.uploadTimeout,
-          );
+      final streamed = await request.send().timeout(ApiConstants.uploadTimeout);
       final res = await http.Response.fromStream(streamed);
       final decoded = _decode(res, 'image price comparison');
       return ComparisonResponse.fromJson(
@@ -307,9 +299,9 @@ class PriceOffer {
   String get displayPrice {
     if (price == null) return '—';
     final rounded = price!.round().toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
     return '${currency ?? 'PKR'} $rounded';
   }
 }

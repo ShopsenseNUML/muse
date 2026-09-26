@@ -96,11 +96,11 @@ class PrimaryButton extends StatelessWidget {
           Text(
             text,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isOutlined
-                      ? (textColor ?? AppTheme.primaryColor)
-                      : (textColor ?? Colors.white),
-                ),
+              fontWeight: FontWeight.w600,
+              color: isOutlined
+                  ? (textColor ?? AppTheme.primaryColor)
+                  : (textColor ?? Colors.white),
+            ),
           ),
         ],
       );
@@ -109,11 +109,11 @@ class PrimaryButton extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: isOutlined
-                ? (textColor ?? AppTheme.primaryColor)
-                : (textColor ?? Colors.white),
-          ),
+        fontWeight: FontWeight.w600,
+        color: isOutlined
+            ? (textColor ?? AppTheme.primaryColor)
+            : (textColor ?? Colors.white),
+      ),
     );
   }
 }
