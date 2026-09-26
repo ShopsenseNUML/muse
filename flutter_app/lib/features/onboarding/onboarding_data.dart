@@ -21,7 +21,7 @@ List<OnboardingModel> onboardingData = [
   ),
   OnboardingModel(
     title: 'Save & Track',
-    description: 'Save your favorite items and track prices in real-time',
+    description: 'Save your favorite items and find them again anytime',
     imageUrl: 'assets/images/onboarding4.png',
   ),
 ];

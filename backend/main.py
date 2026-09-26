@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.api.admin import router as admin_router
 from backend.api.search import router as search_router
@@ -29,6 +33,30 @@ app = FastAPI(
     ),
     version="0.1.0"
 )
+
+
+# -------------------------
+# CORS - the Flutter web app runs in a browser on a different
+# origin/port, so the API must allow cross-origin requests.
+# -------------------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# -------------------------
+# Seed product images — served by the API itself so the Flutter app can
+# always resolve product image URLs (no separate static server needed).
+# -------------------------
+
+_SEED_IMAGE_DIR = Path(__file__).resolve().parent / "data" / "products"
+if _SEED_IMAGE_DIR.is_dir():
+    app.mount("/seed_images", StaticFiles(directory=_SEED_IMAGE_DIR), name="seed_images")
 
 
 # -------------------------

@@ -16,8 +16,8 @@ from backend.services.vector_service import embedding_to_vector
 DATA_DIR = (
     Path(__file__).resolve().parent.parent / "data" / "products"
 )
-# Served by the Flutter web build's http.server on :8080
-IMG_BASE = "http://127.0.0.1:8080/seed_images"
+# Served by the FastAPI backend itself (StaticFiles mount on /seed_images).
+IMG_BASE = "http://127.0.0.1:8000/seed_images"
 
 SAMPLES = [
     (
@@ -65,7 +65,7 @@ INSERT = text("""
         (:id, :title, :brand, :category, :description, :price, :platform,
          :source_url, :original_image_url, :local_image_path,
          CAST(:embedding AS vector))
-    ON CONFLICT (id) DO NOTHING
+    ON CONFLICT (id) DO UPDATE SET original_image_url = EXCLUDED.original_image_url
 """)
 
 
