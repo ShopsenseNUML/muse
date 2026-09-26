@@ -127,24 +127,35 @@ def compare_prices(
             for p in providers
         ]
 
-        for future in as_completed(
-            futures,
-            timeout=timeout_per_provider + 2
-        ):
+        try:
 
-            try:
+            for future in as_completed(
+                futures,
+                timeout=timeout_per_provider + 2
+            ):
 
-                name, price_info = future.result(
-                    timeout=timeout_per_provider
-                )
+                try:
 
-                results[name] = price_info
+                    name, price_info = future.result(
+                        timeout=timeout_per_provider
+                    )
 
-            except Exception as e:
+                    results[name] = price_info
 
-                logger.warning(
-                    "Provider future failed: %s", e
-                )
+                except Exception as e:
+
+                    logger.warning(
+                        "Provider future failed: %s", e
+                    )
+
+        except TimeoutError:
+
+            # A hung provider must not fail the whole comparison:
+            # providers that did not answer in time keep a None entry.
+            logger.warning(
+                "Comparison timed out waiting for providers; "
+                "returning partial results"
+            )
 
     # Ensure every registered provider has an entry (None if it failed)
     prices: List[Optional[Dict]] = []

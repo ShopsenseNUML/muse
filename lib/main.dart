@@ -49,12 +49,20 @@ class ShopSenseApp extends StatelessWidget {
             routes: {
               '/home': (context) => const HomeScreen(),
               '/search': (context) => const SearchScreen(),
-              '/compare': (context) => const CompareScreen(),
+              '/compare': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                return CompareScreen(query: args is String ? args : null);
+              },
               '/history': (context) => const HistoryScreen(),
               '/profile': (context) => const ProfileScreen(),
               '/results': (context) =>
                   const ResultsScreen(isImageSearch: false),
-              '/product-detail': (context) => const ProductDetailScreen(),
+              '/product-detail': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                return ProductDetailScreen(
+                  product: args is Map<String, dynamic> ? args : null,
+                );
+              },
               '/login': (context) => const LoginScreen(),
             },
           );

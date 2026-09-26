@@ -167,7 +167,9 @@ class ProductDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       RatingBarIndicator(
-                        rating: displayProduct['rating'].toDouble(),
+                        rating: (displayProduct['rating'] as num?)
+                                ?.toDouble() ??
+                            0.0,
                         itemBuilder: (context, index) => const Icon(
                           Icons.star,
                           color: AppTheme.lightWarningColor,
@@ -178,7 +180,7 @@ class ProductDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${displayProduct['rating']} (120 reviews)',
+                        '${displayProduct['rating'] ?? 'No rating'} (120 reviews)',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: isDark
                                   ? AppTheme.darkTextSecondaryColor
@@ -192,7 +194,7 @@ class ProductDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'PKR ${displayProduct['price']}',
+                        'PKR ${(displayProduct['price'] as num?)?.round() ?? 0}',
                         style:
                             Theme.of(context).textTheme.displayMedium?.copyWith(
                                   color: isDark
@@ -262,7 +264,9 @@ class ProductDetailScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const CompareScreen(),
+                                builder: (context) => CompareScreen(
+                                  query: displayProduct['name']?.toString(),
+                                ),
                               ),
                             );
                           },

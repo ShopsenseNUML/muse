@@ -206,13 +206,18 @@ class _SearchScreenState extends State<SearchScreen> {
                             productId: product['id'].toString(),
                             imageUrl: product['imageUrl'],
                             title: product['name'],
-                            price: 'PKR ${product['price'].toString()}',
+                            price:
+                                'PKR ${(product['price'] as num?)?.round() ?? 0}',
                             source: product['source'],
                             rating: product['rating'],
                             isSaved: productProvider
                                 .isProductSaved(product['id'].toString()),
                             onTap: () {
-                              Navigator.pushNamed(context, '/product-detail');
+                              Navigator.pushNamed(
+                                context,
+                                '/product-detail',
+                                arguments: product,
+                              );
                             },
                             onSaveTap: () {
                               productProvider.toggleSavedProduct(
@@ -255,29 +260,39 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _performSearch(
-      SearchProvider searchProvider, ProductProvider productProvider) {
+      SearchProvider searchProvider, ProductProvider productProvider) async {
     if (_searchController.text.isNotEmpty) {
       setState(() {
         _isLoading = true;
       });
 
-      // Simulate search delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        final query = _searchController.text;
-        final translatedQuery = searchProvider.translateRomanUrdu(query);
-        final results = productProvider.searchProducts(translatedQuery);
+      final query = _searchController.text;
+      await searchProvider.searchText(query);
 
+      if (!mounted) return;
+
+      if (searchProvider.errorMessage != null) {
         setState(() {
-          _searchResults = results;
+          _searchResults = [];
           _hasSearched = true;
           _isLoading = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(searchProvider.errorMessage!)),
+        );
+        return;
+      }
 
-        if (results.isNotEmpty) {
-          searchProvider.addRecentSearch(query);
-          productProvider.addSearchHistory(query);
-        }
+      setState(() {
+        _searchResults =
+            ProductProvider.toUiMaps(searchProvider.results);
+        _hasSearched = true;
+        _isLoading = false;
       });
+
+      if (_searchResults.isNotEmpty) {
+        productProvider.addSearchHistory(query);
+      }
     }
   }
 
@@ -301,25 +316,47 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void _performImageSearch(String imagePath) {
-    // Simulate image search with mock results
+  void _performImageSearch(String imagePath) async {
     setState(() {
       _isLoading = true;
     });
 
+    final searchProvider =
+        Provider.of<SearchProvider>(context, listen: false);
     final productProvider =
         Provider.of<ProductProvider>(context, listen: false);
 
-    Future.delayed(const Duration(seconds: 1), () {
-      // Return some random products as image search results
-      final allProducts = productProvider.products;
-      final randomResults = (allProducts..shuffle()).take(6).toList();
+    // If the user also typed a query, use hybrid (image + text) search.
+    final query = _searchController.text.trim();
+    final image = XFile(imagePath);
+    if (query.isNotEmpty) {
+      await searchProvider.searchHybrid(image, query);
+    } else {
+      await searchProvider.searchImage(image);
+    }
 
+    if (!mounted) return;
+
+    if (searchProvider.errorMessage != null) {
       setState(() {
-        _searchResults = randomResults;
+        _searchResults = [];
         _hasSearched = true;
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(searchProvider.errorMessage!)),
+      );
+      return;
+    }
+
+    setState(() {
+      _searchResults = ProductProvider.toUiMaps(searchProvider.results);
+      _hasSearched = true;
+      _isLoading = false;
     });
+
+    if (_searchResults.isNotEmpty && query.isNotEmpty) {
+      productProvider.addSearchHistory(query);
+    }
   }
 }
