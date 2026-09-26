@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from pydantic import BaseModel
 
@@ -21,9 +21,16 @@ class SearchRequest(BaseModel):
 
 @router.post("/text")
 
-def text_search(
-    request: SearchRequest
-):
+def text_search(request: SearchRequest | list[SearchRequest]):
+    # Accept {"query": "..."} — and tolerate [{"query": "..."}] (a
+    # single-element list), which some clients/docs users send.
+    if isinstance(request, list):
+        if not request:
+            raise HTTPException(
+                status_code=422,
+                detail='Request body must be {"query": "<search text>"}',
+            )
+        request = request[0]
 
     analysis = analyze_query(
         request.query
