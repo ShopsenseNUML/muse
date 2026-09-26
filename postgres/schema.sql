@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS products_raw (
     failure_reason    TEXT,
     downloaded_at     TIMESTAMP,
     embedded_at       TIMESTAMP,
-    embedding         VECTOR,
+    embedding         VECTOR(512),
     created_at        TIMESTAMP DEFAULT NOW()
 );
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS products (
     source_url          VARCHAR,
     original_image_url  VARCHAR,
     local_image_path    VARCHAR,
-    embedding           VECTOR,
+    embedding           VECTOR(512),
     created_at          TIMESTAMP DEFAULT NOW()
 );
 
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS search_logs (
 CREATE TABLE IF NOT EXISTS query_searches (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     query_text      VARCHAR,
-    query_embedding VECTOR,
+    query_embedding VECTOR(512),
     top_similarity  DOUBLE PRECISION,
     created_at      TIMESTAMP DEFAULT NOW()
 );
